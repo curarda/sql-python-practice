@@ -1,151 +1,85 @@
-"""4. Gün: Python temelleri."""
+"""Bölüm 4: Kontrol akışı — if, for, while, comprehension."""
 
 from curriculum.models import Ders, Metrik, Soru
 
 DERS = Ders(
     gun=4,
-    baslik="Python temelleri",
+    baslik="Kontrol akışı",
     anlatim="""
-Python'da değişken atamak için `=` kullanılır; tip değişebilir ama her değerin bir tipi vardır:
-`int`, `float`, `str`, `bool`. Tip dönüşümü için `int('8')`, `str(5)` yazılır.
+- `if / elif / else`: koşula göre dallanma. Koşul bir karşılaştırma ya da truthiness olabilir.
+- `for eleman in koleksiyon:` bir listeyi, sözlüğü ya da aralığı (`range(n)`) dolaşır.
+- `while koşul:` koşul doğru olduğu sürece tekrar eder; döngüyü bir yerde durdurman gerekir,
+  yoksa sonsuza kadar çalışır (`break` ile çıkılır).
+- **Comprehension**, bir döngüyü tek satırda yazar: `[ifade for eleman in liste if koşul]`.
+  Okunabilir ve genelde döngüden hızlıdır.
 
-- **Liste** `[1, 2, 3]` sıralı koleksiyondur. `[x * 2 for x in liste if x > 1]` bir liste üretimidir.
-- **Sözlük** `{'anahtar': değer}` anahtar-değer eşleşmesidir.
-- `for` bir koleksiyonu dolaşır; `if / elif / else` koşul kontrolü yapar.
-- `def` ile fonksiyon tanımlanır. `return` sonucu geri verir.
-
-Bu alıştırmalarda sonucu **`result`** değişkenine yazmalısın. `df` değişkeni, seçtiğin tablonun (`orders`) hazır kopyasıdır.
+**pandas varken döngü yazmalı mıyım?** Çoğu zaman hayır: pandas'ın vektörleştirilmiş
+işlemleri (Bölüm 6, 8) aynı işi satır satır döngüden çok daha hızlı yapar. Döngü, pandas'ın
+doğrudan karşılığı olmayan özel bir mantık gerektiğinde ya da tek seferlik küçük işlerde
+tercih edilir.
 """,
-    ornek="""sayilar = [3, 8, 15, 22]
-cift = [x for x in sayilar if x % 2 == 0]   # [8, 22]
-
-def etiket(n):
-    if n > 10:
-        return 'Büyük'
-    return 'Küçük'
-
-result = [etiket(n) for n in cift]""",
+    ornek="""fiyatlar = [750, 2400, 1100, 180, 1900]
+pahalilar = [f for f in fiyatlar if f > 1000]
+print(pahalilar, sum(pahalilar))     # -> [2400, 1100, 1900] 5400""",
     ornek_dili="python",
     metrikler=[
         Metrik(
-            baslik="ARPU",
-            aciklama=(
-                "Kullanıcı başına ortalama gelirdir: toplam gelir / (ilgili dönemdeki) kullanıcı sayısı. "
-                "Ücretli ve ücretsiz kullanıcıları ayırarak da hesaplanır."
-            ),
+            baslik="Kısa kural",
+            aciklama="Basit bir filtre/dönüşümse comprehension yaz; birden çok adım ve okunabilirlik gerekiyorsa normal for döngüsüne geç.",
         ),
     ],
 )
 
 SORULAR = [
     Soru(
-        id="g4-s01",
+        id="b4-s01",
         gun=4,
         tur="python",
-        kavram="Değişkenler ve tip dönüşümü",
-        soru=(
-            "`sayi1 = 12` ve `sayi2 = '8'` (metin) değişkenlerini tanımla. "
-            "`sayi2`'yi tam sayıya çevirip `sayi1` ile topla ve toplamı `result` değişkenine yaz."
-        ),
-        beklenen="result = 20 (tam sayı).",
-        ipucu="Metin ile sayı doğrudan toplanmaz. Önce int(sayi2) ile dönüştür.",
-        cozum="sayi1 = 12\nsayi2 = '8'\nresult = sayi1 + int(sayi2)",
-    ),
-    Soru(
-        id="g4-s02",
-        gun=4,
-        tur="python",
-        kavram="Liste ve liste üretimi",
-        soru=(
-            "`sayilar = [3, 8, 15, 22, 7, 10]` listesindeki çift sayıları, sıralarını koruyarak "
-            "liste üretimi (list comprehension) ile `result` değişkenine yaz."
-        ),
-        beklenen="result = [8, 22, 10]",
-        ipucu="Çift sayı kontrolü için x % 2 == 0 kullan. Yapı: [x for x in sayilar if koşul].",
-        cozum="sayilar = [3, 8, 15, 22, 7, 10]\nresult = [x for x in sayilar if x % 2 == 0]",
-    ),
-    Soru(
-        id="g4-s03",
-        gun=4,
-        tur="python",
-        kavram="Sözlük ve sayaç",
-        soru=(
-            "`durumlar = ['completed', 'cancelled', 'completed', 'pending', 'completed']` listesinde her değerin kaç kez geçtiğini "
-            "bir sözlük (dict) olarak `result` değişkenine yaz. Anahtarlar durum metinleri, değerler sayılar olsun."
-        ),
-        beklenen="result = {'completed': 3, 'cancelled': 1, 'pending': 1}",
-        ipucu="Boş bir sözlük oluştur. Döngüde result[d] = result.get(d, 0) + 1 yazabilirsin.",
+        kavram="if / elif / else",
+        soru='`tutarlar = [180, 750, 1900, 6500]` listesindeki her tutarı sınıflandır: 500\'den küçükse "Ucuz", 500-2000 arası (2000 dahil) "Orta", üstü "Pahalı". Sonuçları sırayla bir liste olarak `result`\'a yaz.',
+        beklenen="result = ['Ucuz', 'Orta', 'Orta', 'Pahalı']",
+        ipucu="Bir sınıflandırma fonksiyonu yaz, sonra liste üretimiyle her tutara uygula.",
         cozum=(
-            "durumlar = ['completed', 'cancelled', 'completed', 'pending', 'completed']\n"
-            "result = {}\n"
-            "for d in durumlar:\n"
-            "    result[d] = result.get(d, 0) + 1"
-        ),
-    ),
-    Soru(
-        id="g4-s04",
-        gun=4,
-        tur="python",
-        kavram="def ve if/elif/else",
-        soru=(
-            "`tutar_sinifi(tutar)` adında bir fonksiyon tanımla: tutar 500'den küçükse 'Düşük', "
-            "500 ile 1000 arasında (iki uç dahil) ise 'Orta', 1000'den büyükse 'Yüksek' döndürsün. "
-            "Sonra `result = [tutar_sinifi(t) for t in [120, 500, 1000, 1500]]` yaz."
-        ),
-        beklenen="result = ['Düşük', 'Orta', 'Orta', 'Yüksek']",
-        ipucu="İlk koşul tutar < 500, sonra tutar <= 1000 olabilir. Metinleri tam bu şekilde (Türkçe karakterli) yazmalısın.",
-        cozum=(
-            "def tutar_sinifi(tutar):\n"
-            "    if tutar < 500:\n"
-            "        return 'Düşük'\n"
-            "    elif tutar <= 1000:\n"
+            "def sinif(t):\n"
+            "    if t < 500:\n"
+            "        return 'Ucuz'\n"
+            "    if t <= 2000:\n"
             "        return 'Orta'\n"
-            "    else:\n"
-            "        return 'Yüksek'\n"
-            "\n"
-            "result = [tutar_sinifi(t) for t in [120, 500, 1000, 1500]]"
+            "    return 'Pahalı'\n\n"
+            "tutarlar = [180, 750, 1900, 6500]\n"
+            "result = [sinif(t) for t in tutarlar]"
         ),
     ),
     Soru(
-        id="g4-s05",
+        id="b4-s02",
         gun=4,
         tur="python",
-        kavram="for döngüsü ve df",
-        soru=(
-            "`df` (orders tablosu) içindeki satırları `for` döngüsüyle dolaş ve `status` değeri 'cancelled' olan "
-            "satırların sayısını `result` değişkenine yaz (tam sayı)."
-        ),
-        beklenen="result bir tam sayı (int), iptal edilmiş sipariş sayısı.",
-        ipucu=(
-            "Sayaç olarak result = 0 ile başla. df.iterrows() her satırı (indeks, satır) olarak verir; "
-            "satir['status'] ile değere ulaşırsın."
-        ),
+        kavram="for, zip ve comprehension",
+        soru='`urunler = ["Kulaklık", "Mont", "Klavye"]` ve `fiyatlar = [750, 2400, 1100]` listelerini `zip` ile eşleştir; fiyatı 1000\'den büyük olan ürünlerin adlarını bir liste olarak `result`\'a yaz.',
+        beklenen="result = ['Mont', 'Klavye']",
+        ipucu="zip(urunler, fiyatlar) iki listeyi eş zamanlı dolaştırır: [u for u, f in zip(urunler, fiyatlar) if f > 1000].",
         cozum=(
-            "result = 0\n"
-            "for _, satir in df.iterrows():\n"
-            "    if satir['status'] == 'cancelled':\n"
-            "        result += 1"
+            'urunler = ["Kulaklık", "Mont", "Klavye"]\n'
+            "fiyatlar = [750, 2400, 1100]\n"
+            "result = [u for u, f in zip(urunler, fiyatlar) if f > 1000]"
         ),
-        tablo="orders",
     ),
     Soru(
-        id="g4-s06",
+        id="b4-s03",
         gun=4,
         tur="python",
-        kavram="Fonksiyon ve boş girdi kontrolü",
-        soru=(
-            "`ortalama(liste)` adında bir fonksiyon tanımla. Liste boşsa 0 döndürsün; değilse elemanların ortalamasını döndürsün. "
-            "Sonra `result = [ortalama([]), ortalama([2, 4, 9])]` yaz."
-        ),
-        beklenen="result = [0, 5.0]",
-        ipucu="Boş listede bölme yapılırsa ZeroDivisionError olur. Önce `if not liste:` ile kontrol et. Ortalama = toplam / eleman sayısı.",
+        kavram="while döngüsü",
+        soru="`stok = 10` ile başla. `satislar = [2, 3, 4, 5]` listesindeki satışları sırayla stoktan düş. Stok 0 veya altına düştüğünde (ya da liste biterse) durdur; kaç satış işlendiğini (döngünün kaç kez çalıştığını) `result`'a tam sayı olarak yaz.",
+        beklenen="result = 4",
+        ipucu="while stok > 0 and i < len(satislar): ile ilerle, her adımda i'yi 1 artır.",
         cozum=(
-            "def ortalama(liste):\n"
-            "    if not liste:\n"
-            "        return 0\n"
-            "    return sum(liste) / len(liste)\n"
-            "\n"
-            "result = [ortalama([]), ortalama([2, 4, 9])]"
+            "stok = 10\n"
+            "satislar = [2, 3, 4, 5]\n"
+            "i = 0\n"
+            "while stok > 0 and i < len(satislar):\n"
+            "    stok -= satislar[i]\n"
+            "    i += 1\n"
+            "result = i"
         ),
     ),
 ]

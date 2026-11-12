@@ -1,188 +1,145 @@
-"""Gün 7 vakalarının referans çözümlerini, verinin bağımsız (SQL'siz, saf Python) hesabıyla doğrular.
-
-Amaç: referans SQL/pandas'ın yanlış bir şey hesaplamadığından emin olmak. Bağımsız hesap
-aynı kuralları (tekilleştirme, boş değer, normalizasyon) elle uygular.
+"""Bölüm 19 (uçtan uca vaka) sorularını, pandas groupby KULLANMAYAN saf Python döngüleriyle
+bağımsız olarak doğrular. Amaç: referans çözümün (pandas tabanlı) yanlış bir şey
+hesaplamadığından emin olmak için farklı bir kod yoluyla aynı sonuca ulaşmak.
 """
 
 import math
 import statistics
 from collections import defaultdict
-from datetime import date
 
-import pandas as pd
 import pytest
 
 import checker
 import data
-from curriculum import GUNLER, TUM_SORULAR
+from curriculum import TUM_SORULAR
 
-VAKA_IDLERI = ["g7-s04", "g7-s05", "g7-s06", "g7-s07", "g7-s08"]
-OZET = "Kanal farkı belirgin. Reklam kanalı düşük tutuyor. Onboarding e-postası önerilir."
-
-
-def _yari_yukari(deger: float, basamak: int = 2) -> float:
-    """SQLite ROUND gibi yarımı sıfırdan uzağa yuvarlar (Python round'un banker's yuvarlamasından farklı)."""
-    carpan = 10**basamak
-    return math.floor(deger * carpan + 0.5) / carpan
+VAKA_IDLERI = ["b19-s01", "b19-s02", "b19-s03", "b19-s04", "b19-s05", "b19-s06"]
+OZET = "Giyimde iade oranı yüksek. Kasım sonu ciroyu belirgin artırıyor. Stok ve kampanya buna göre planlanmalı."
 
 
 def _bos(v) -> bool:
     return v is None or (isinstance(v, float) and math.isnan(v))
 
 
-def _tablolar():
-    return data.tablolari_uret()
+def _tr_title(metin: str) -> str:
+    return metin.strip().title()
 
 
-def _sql_sonucu(soru_id):
-    return checker.run_sql(TUM_SORULAR[soru_id].cozum, checker._tablolarin_kopyasi())
+def _temiz_satirlar() -> list[dict]:
+    """`vaka_siparisler`i saf Python ile temizler: kategori düzelt, tekrarları at, kötü tutarı çıkar."""
+    s = data.tablolari_uret()["vaka_siparisler"]
+    gorulen = set()
+    satirlar = []
+    for r in s.itertuples(index=False):
+        kategori = _tr_title(r.kategori)
+        anahtar = (r.siparis_no, r.tarih, r.musteri_id, kategori, r.kanal, r.tutar, r.iade)
+        if anahtar in gorulen:
+            continue
+        gorulen.add(anahtar)
+        if _bos(r.tutar) or r.tutar <= 0:
+            continue
+        satirlar.append(
+            {
+                "siparis_no": r.siparis_no,
+                "tarih": r.tarih,  # gg.aa.yyyy metin
+                "musteri_id": r.musteri_id,
+                "kategori": kategori,
+                "kanal": r.kanal,
+                "tutar": r.tutar,
+                "iade": bool(r.iade),
+                "net_tutar": 0.0 if r.iade else r.tutar,
+            }
+        )
+    return satirlar
 
 
-def _python_sonucu(soru_id):
-    soru = TUM_SORULAR[soru_id]
-    sonuc, _, hata = checker.run_python(soru.cozum, soru.tablo, checker._tablolarin_kopyasi())
-    assert hata is None, hata
-    return sonuc
+def test_b19_s01_temizlik_sayisi_bagimsiz_hesapla_eslesir():
+    satirlar = _temiz_satirlar()
+    sonuc = checker.run_python(TUM_SORULAR["b19-s01"].cozum, "vaka_siparisler")[0]
+    assert sonuc["bitti"] == len(satirlar)
+    assert sonuc["basla"] - sonuc["cikan"] == sonuc["bitti"]
+    assert sonuc == {"basla": 6030, "bitti": len(satirlar), "cikan": 6030 - len(satirlar)}
 
 
-def _tekil_kullanicilar(users: pd.DataFrame) -> dict:
-    """user_id -> ilk görülen satır (birebir tekrarlar aynı olduğu için bu yeterli)."""
-    tekil = {}
-    for satir in users.itertuples(index=False):
-        tekil.setdefault(satir.user_id, satir)
-    return tekil
+def test_b19_s02_kpilar_bagimsiz_hesapla_eslesir():
+    satirlar = _temiz_satirlar()
+    net_ciro = sum(r["net_tutar"] for r in satirlar)
+    musteriler = {r["musteri_id"] for r in satirlar}
+    tutarlar = [r["tutar"] for r in satirlar]
+    iade_orani = sum(r["iade"] for r in satirlar) / len(satirlar)
+
+    sonuc = checker.run_python(TUM_SORULAR["b19-s02"].cozum, "vaka_siparisler")[0]
+    assert sonuc["net_ciro"] == round(net_ciro)
+    assert sonuc["siparis"] == len(satirlar)
+    assert sonuc["musteri"] == len(musteriler)
+    assert sonuc["ort_sepet"] == round(statistics.mean(tutarlar))
+    assert sonuc["medyan_sepet"] == round(statistics.median(tutarlar))
+    assert sonuc["iade_orani"] == pytest.approx(round(iade_orani, 3), abs=0.001)
 
 
-def test_vaka_sayisi_ve_alanlari():
-    vakalar = [s for g in GUNLER if g.numara == 7 for s in g.sorular if s.rubrik]
-    assert len(vakalar) >= 5, f"Gün 7'de en az 5 vaka olmalı, bulunan {len(vakalar)}"
-    for soru in vakalar:
-        assert soru.ozet_gerekli, soru.id
-        assert soru.kirlilik.strip(), f"{soru.id}: veri sorunu tanımlı değil"
-        assert soru.beklenen.strip(), soru.id
-        assert soru.rubrik.count("\n") >= 2, f"{soru.id}: rubrik 3 ölçüt içermeli"
+def test_b19_s03_kategori_ozeti_bagimsiz_hesapla_eslesir():
+    satirlar = _temiz_satirlar()
+    gruplar: dict[str, list[dict]] = defaultdict(list)
+    for r in satirlar:
+        gruplar[r["kategori"]].append(r)
+    beklenen = {}
+    for kategori, grup in gruplar.items():
+        beklenen[kategori] = {
+            "siparis": len(grup),
+            "brut": round(sum(r["tutar"] for r in grup), 1),
+            "net": round(sum(r["net_tutar"] for r in grup), 1),
+        }
+
+    sonuc = checker.run_python(TUM_SORULAR["b19-s03"].cozum, "vaka_siparisler")[0]
+    assert set(sonuc["kategori"]) == set(beklenen)
+    for _, satir in sonuc.iterrows():
+        k = satir["kategori"]
+        assert int(satir["siparis"]) == beklenen[k]["siparis"], k
+        assert satir["brut"] == pytest.approx(beklenen[k]["brut"], abs=0.5), k
+        assert satir["net"] == pytest.approx(beklenen[k]["net"], abs=0.5), k
+    # net'e göre azalan sıralı olmalı
+    assert list(sonuc["net"]) == sorted(sonuc["net"], reverse=True)
 
 
-def test_vakalar_yeni_eklenenler_dahil_tanimli():
+def test_b19_s04_kasim_sonu_payi_bagimsiz_hesapla_eslesir():
+    from datetime import date
+
+    satirlar = _temiz_satirlar()
+    toplam = sum(r["net_tutar"] for r in satirlar)
+    kasim_sonu = 0.0
+    for r in satirlar:
+        gun, ay, yil = (int(x) for x in r["tarih"].split("."))
+        d = date(yil, ay, gun)
+        if date(2025, 11, 20) <= d <= date(2025, 11, 30):
+            kasim_sonu += r["net_tutar"]
+    beklenen = round(kasim_sonu / toplam, 3)
+
+    sonuc = checker.run_python(TUM_SORULAR["b19-s04"].cozum, "vaka_siparisler")[0]
+    assert sonuc == pytest.approx(beklenen, abs=0.001)
+    assert sonuc == pytest.approx(0.082, abs=0.001)
+
+
+def test_b19_s05_musteri_yogunlasmasi_bagimsiz_hesapla_eslesir():
+    satirlar = _temiz_satirlar()
+    musteri_ciro: dict[str, float] = defaultdict(float)
+    for r in satirlar:
+        musteri_ciro[r["musteri_id"]] += r["net_tutar"]
+    sirali = sorted(musteri_ciro.values(), reverse=True)
+    n_ustte = int(len(sirali) * 0.1)
+    beklenen = round(sum(sirali[:n_ustte]) / sum(sirali), 3)
+
+    sonuc = checker.run_python(TUM_SORULAR["b19-s05"].cozum, "vaka_siparisler")[0]
+    assert sonuc == pytest.approx(beklenen, abs=0.001)
+    assert sonuc == pytest.approx(0.577, abs=0.001)
+
+
+def test_vaka_sorulari_tanimli_ve_rubrikli():
     for sid in VAKA_IDLERI:
-        assert sid in TUM_SORULAR
-
-
-def test_g7_s04_kanal_geliri_bagimsiz_hesapla_eslesir():
-    t = _tablolar()
-    tekil = _tekil_kullanicilar(t["users"])
-    ciro = defaultdict(list)
-    sayi = defaultdict(int)
-    for siparis in t["orders"].itertuples(index=False):
-        if siparis.status != "completed":
-            continue
-        kullanici = tekil.get(siparis.user_id)
-        kanal = "bilinmiyor" if kullanici is None or _bos(kullanici.acquisition_channel) else kullanici.acquisition_channel
-        sayi[kanal] += 1
-        if not _bos(siparis.amount):
-            ciro[kanal].append(siparis.amount)
-
-    beklenen = {
-        k: (round(sum(ciro[k]), 2) if ciro[k] else None, sayi[k]) for k in sayi
-    }
-    sonuc = _sql_sonucu("g7-s04")
-    assert set(sonuc.columns) == {"kanal", "ciro", "siparis_sayisi"}
-    bulunan = {
-        r.kanal: (None if _bos(r.ciro) else round(r.ciro, 2), int(r.siparis_sayisi))
-        for r in sonuc.itertuples(index=False)
-    }
-    assert set(bulunan) == set(beklenen)
-    for kanal, (ciro_b, sayi_b) in beklenen.items():
-        ciro_u, sayi_u = bulunan[kanal]
-        assert sayi_u == sayi_b, kanal
-        if ciro_b is None:
-            assert ciro_u is None, kanal
-        else:
-            assert ciro_u == pytest.approx(ciro_b, abs=0.01), kanal
-
-
-def test_g7_s05_ulke_aktif_orani_bagimsiz_hesapla_eslesir():
-    t = _tablolar()
-    tekil = _tekil_kullanicilar(t["users"])
-    aktif = {s.user_id for s in t["orders"].itertuples(index=False) if s.status == "completed"}
-
-    kullanici_say = defaultdict(set)
-    for kullanici_id, satir in tekil.items():
-        ulke = "bilinmiyor" if _bos(satir.country) else satir.country.strip().lower()
-        kullanici_say[ulke].add(kullanici_id)
-
-    beklenen = {
-        u: (len(ids), len(ids & aktif), _yari_yukari(len(ids & aktif) / len(ids)))
-        for u, ids in kullanici_say.items()
-    }
-    sonuc = _sql_sonucu("g7-s05")
-    assert list(sonuc.columns) == ["ulke", "kullanici", "aktif_kullanici", "aktif_oran"]
-    bulunan = {
-        r.ulke: (int(r.kullanici), int(r.aktif_kullanici), round(r.aktif_oran, 2))
-        for r in sonuc.itertuples(index=False)
-    }
-    assert bulunan.keys() == beklenen.keys()
-    for ulke, (k_b, a_b, o_b) in beklenen.items():
-        k_u, a_u, o_u = bulunan[ulke]
-        assert (k_u, a_u) == (k_b, a_b), ulke
-        assert o_u == pytest.approx(o_b, abs=0.01), ulke
-
-
-def test_g7_s06_medyan_ve_bos_sayisi_bagimsiz_hesapla_eslesir():
-    t = _tablolar()
-    tamamlanan = [s for s in t["orders"].itertuples(index=False) if s.status == "completed"]
-    tutarlar = [s.amount for s in tamamlanan if not _bos(s.amount)]
-    beklenen = {
-        "medyan_tutar": round(statistics.median(tutarlar), 2),
-        "bos_tutar_sayisi": sum(1 for s in tamamlanan if _bos(s.amount)),
-    }
-    sonuc = _python_sonucu("g7-s06")
-    assert isinstance(sonuc, dict)
-    assert set(sonuc) == set(beklenen)
-    assert sonuc["medyan_tutar"] == pytest.approx(beklenen["medyan_tutar"], abs=0.01)
-    assert sonuc["bos_tutar_sayisi"] == beklenen["bos_tutar_sayisi"]
-    assert beklenen["bos_tutar_sayisi"] > 0, "vaka boş tutar kirliliğini içermeli"
-
-
-def test_g7_s07_cihaz_ortalamasi_bagimsiz_hesapla_eslesir():
-    t = _tablolar()
-    toplam = defaultdict(list)
-    for oturum in t["sessions"].itertuples(index=False):
-        cihaz = oturum.device.strip().lower()
-        if not _bos(oturum.duration_sec):
-            toplam[cihaz].append(oturum.duration_sec)
-    beklenen = {c: round(sum(v) / len(v), 2) for c, v in toplam.items()}
-
-    sonuc = _python_sonucu("g7-s07")
-    assert list(sonuc.columns) == ["cihaz", "ortalama_sure"]
-    bulunan = dict(zip(sonuc["cihaz"], sonuc["ortalama_sure"].round(2)))
-    assert set(bulunan) == set(beklenen) == {"desktop", "mobile", "tablet"}
-    for cihaz in beklenen:
-        assert bulunan[cihaz] == pytest.approx(beklenen[cihaz], abs=0.01), cihaz
-
-
-def test_g7_s08_kayit_ile_ilk_siparis_arasi_gun_bagimsiz_hesapla_eslesir():
-    t = _tablolar()
-    tekil = _tekil_kullanicilar(t["users"])
-    ilk = {}
-    for siparis in t["orders"].itertuples(index=False):
-        if siparis.status != "completed":
-            continue
-        if siparis.user_id not in ilk or siparis.order_date < ilk[siparis.user_id]:
-            ilk[siparis.user_id] = siparis.order_date
-
-    farklar = []
-    for user_id, kayit in tekil.items():
-        if _bos(kayit.signup_date) or user_id not in ilk:
-            continue
-        farklar.append((date.fromisoformat(ilk[user_id]) - date.fromisoformat(kayit.signup_date)).days)
-    beklenen = round(sum(farklar) / len(farklar), 1)
-
-    sonuc = _sql_sonucu("g7-s08")
-    assert list(sonuc.columns) == ["ortalama_gun"]
-    assert len(sonuc) == 1
-    assert sonuc["ortalama_gun"].iloc[0] == pytest.approx(beklenen, abs=0.05)
-    assert beklenen >= 0
+        soru = TUM_SORULAR[sid]
+        assert soru.kirlilik.strip(), sid
+    son = TUM_SORULAR["b19-s06"]
+    assert son.ozet_gerekli
+    assert son.rubrik.count("\n") >= 2
 
 
 @pytest.mark.parametrize("sid", VAKA_IDLERI)
@@ -192,8 +149,7 @@ def test_vaka_referans_cozumu_ozetle_birlikte_kabul_edilir(sid):
     assert sonuc.dogru, f"{sid}: {sonuc.mesaj} {sonuc.detay}"
 
 
-@pytest.mark.parametrize("sid", VAKA_IDLERI)
-def test_vaka_ozet_eksikse_kabul_edilmez(sid):
-    soru = TUM_SORULAR[sid]
+def test_vaka_ozet_eksikse_kabul_edilmez():
+    soru = TUM_SORULAR["b19-s06"]
     sonuc = checker.check(soru, soru.cozum, "Kısa özet.")
     assert sonuc.kategori == "ozet_eksik"

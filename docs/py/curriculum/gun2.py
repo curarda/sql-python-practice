@@ -1,127 +1,67 @@
-"""2. Gün: SQL toplulaştırma."""
+"""Bölüm 2: Python temelleri — değişkenler, veri tipleri, operatörler, metin."""
 
 from curriculum.models import Ders, Metrik, Soru
 
 DERS = Ders(
     gun=2,
-    baslik="SQL toplulaştırma",
+    baslik="Python temelleri",
     anlatim="""
-Toplulaştırma fonksiyonları birden fazla satırı tek değere indirir:
-`COUNT`, `SUM`, `AVG`, `MIN`, `MAX`. Dikkat edilecek üç nokta var:
+Dört temel tip: `int` (tam sayı), `float` (ondalıklı sayı), `str` (metin), `bool`
+(`True`/`False`). Bir CSV'den okunan sayılar bazen metin gelir; `int("3")`, `float("1850.5")`
+ile sayıya, `str(5)` ile metne çevirirsin.
 
-- `COUNT(*)` tüm satırları sayar; `COUNT(sütun)` yalnızca boş olmayanları sayar.
-- `GROUP BY` ile her grup için ayrı sonuç alırsın. `GROUP BY` içinde olmayan sütun seçilemez.
-- `WHERE` gruplamadan **önce** satırları filtreler; `HAVING` gruplamadan **sonra** grupları filtreler.
+Aritmetik operatörler: `+ - * /` (bölme her zaman float döner), `//` (tam bölüm), `%` (kalan),
+`**` (üs). Karşılaştırma: `== != < > <= >=`, sonuçları her zaman `bool`.
 
-`CASE WHEN` ile koşullu toplama yapılır: `SUM(CASE WHEN status = 'completed' THEN amount END)`.
+**f-string**, bir sayıyı okunur metne çevirmenin yoludur: `f"{tutar:,.0f} TL"` binlik ayraçlı,
+ondalıksız bir metin üretir (`:,.2f` iki ondalıklı, `:.1%` yüzde biçimi için).
+
+**Doğruluk değeri (truthiness)**: `if` bir koşulu değil, herhangi bir değeri de kabul eder.
+`0`, `0.0`, `""`, `None`, boş liste/sözlük `False` sayılır; geri kalan her şey `True`'dur.
+Bu yüzden `if liste:` ifadesi "liste boş değilse" anlamına gelir.
 """,
-    ornek="""SELECT status,
-       COUNT(*) AS siparis_sayisi,
-       SUM(amount) AS toplam_tutar
-FROM orders
-GROUP BY status
-HAVING COUNT(*) > 10;""",
-    ornek_dili="sql",
+    ornek="""adet_metni = "3"
+birim_fiyat = 450.5
+toplam = int(adet_metni) * birim_fiyat     # -> 1351.5
+print(f"Toplam: {toplam:,.1f} TL")          # -> "Toplam: 1,351.5 TL\"""",
+    ornek_dili="python",
     metrikler=[
         Metrik(
-            baslik="Conversion (dönüşüm oranı)",
-            aciklama=(
-                "Belirli bir adımdan sonraki adıma geçen kullanıcının oranıdır. "
-                "Örneğin: satın alma yapan kullanıcı sayısı / siteyi ziyaret eden kullanıcı sayısı."
-            ),
+            baslik="Dikkat",
+            aciklama="CSV'den okunan sayılar genelde metindir (str); doğrudan toplamaya çalışırsan TypeError alırsın. Önce dönüştür.",
         ),
     ],
 )
 
 SORULAR = [
     Soru(
-        id="g2-s01",
+        id="b2-s01",
         gun=2,
-        tur="sql",
-        kavram="COUNT(*) ve COUNT(sütun)",
-        soru=(
-            "`orders` tablosunda toplam sipariş sayısını (`toplam_siparis`) ve "
-            "`amount` değeri dolu olan sipariş sayısını (`dolu_tutar`) tek satırda getir."
-        ),
-        beklenen="1 satır, 2 sütun: `toplam_siparis`, `dolu_tutar`. `dolu_tutar` daha küçük olmalı.",
-        ipucu="COUNT(*) satır sayar. COUNT(amount) ise NULL olanları saymaz. İkisini aynı SELECT içinde yazabilirsin.",
-        cozum="SELECT COUNT(*) AS toplam_siparis, COUNT(amount) AS dolu_tutar FROM orders;",
-        tablo="orders",
+        tur="python",
+        kavram="Tip dönüşümü",
+        soru='`adet_metni = "3"` (metin) ve `birim_fiyat = 450.5` değişkenlerini tanımla. `adet_metni`yi tam sayıya çevirip `birim_fiyat` ile çarp, sonucu `result`\'a yaz.',
+        beklenen="result = 1351.5",
+        ipucu="int(adet_metni) ile önce metni tam sayıya çevir.",
+        cozum='adet_metni = "3"\nbirim_fiyat = 450.5\nresult = int(adet_metni) * birim_fiyat',
     ),
     Soru(
-        id="g2-s02",
+        id="b2-s02",
         gun=2,
-        tur="sql",
-        kavram="GROUP BY, SUM",
-        soru=(
-            "`orders` tablosunda her `status` için `status`, `siparis_sayisi` (satır sayısı) ve "
-            "`toplam_tutar` (amount toplamı) sütunlarını getir."
-        ),
-        beklenen="3 satır (completed, cancelled, pending), 3 sütun. Sıra önemli değil.",
-        ipucu="Gruplama sütununu hem SELECT'e hem GROUP BY'a yaz. Toplam için SUM(amount) kullan.",
-        cozum=(
-            "SELECT status, COUNT(*) AS siparis_sayisi, SUM(amount) AS toplam_tutar "
-            "FROM orders GROUP BY status;"
-        ),
-        tablo="orders",
+        tur="python",
+        kavram="f-string ile biçimlendirme",
+        soru='`tutar = 1850.5` değişkenini `"Toplam: 1,850 TL"` biçiminde (binlik ayraçlı, ondalıksız) bir metne çevirip `result`\'a yaz.',
+        beklenen='result = "Toplam: 1,850 TL"',
+        ipucu='f"{tutar:,.0f} TL" biçimini kullan; :,.0f binlik ayraç ekler ve ondalığı atar.',
+        cozum='tutar = 1850.5\nresult = f"Toplam: {tutar:,.0f} TL"',
     ),
     Soru(
-        id="g2-s03",
+        id="b2-s03",
         gun=2,
-        tur="sql",
-        kavram="CASE WHEN ve koşullu toplama",
-        soru=(
-            "`orders` tablosunda her ay için (`order_date` içinden 'YYYY-MM' biçiminde) şu sütunları getir: "
-            "`ay`, `tamamlanan_ciro` (yalnızca 'completed' siparişlerin amount toplamı) ve "
-            "`iptal_orani` (siparişlerin 'cancelled' olanlarının oranı, 0 ile 1 arasında, 2 ondalık). "
-            "`ay` değerine göre artan sırala."
-        ),
-        beklenen="3 satır (2024-01, 2024-02, 2024-03), 3 sütun. İptal oranı 0 ile 1 arasında bir sayı.",
-        ipucu=(
-            "Ay için strftime('%Y-%m', order_date) kullanılabilir. Koşullu toplama: SUM(CASE WHEN status = 'completed' THEN amount END). "
-            "İptal oranı için AVG(CASE WHEN ... THEN 1.0 ELSE 0 END) düşün."
-        ),
-        cozum=(
-            "SELECT strftime('%Y-%m', order_date) AS ay, "
-            "SUM(CASE WHEN status = 'completed' THEN amount END) AS tamamlanan_ciro, "
-            "ROUND(AVG(CASE WHEN status = 'cancelled' THEN 1.0 ELSE 0 END), 2) AS iptal_orani "
-            "FROM orders GROUP BY ay ORDER BY ay;"
-        ),
-        tablo="orders",
-        sirali=True,
-    ),
-    Soru(
-        id="g2-s04",
-        gun=2,
-        tur="sql",
-        kavram="HAVING",
-        soru=(
-            "`orders` tablosunda yalnızca 'completed' siparişleri dikkate al. En az 3 tamamlanmış siparişi olan "
-            "kullanıcıların `user_id` ve `completed_sayisi` (tamamlanmış sipariş sayısı) değerlerini getir."
-        ),
-        beklenen="2 sütun (`user_id`, `completed_sayisi`). Her satırda completed_sayisi 3 veya daha büyük.",
-        ipucu="Satırları WHERE ile filtrele, gruplamayı user_id'ye göre yap. Grup koşulu HAVING ile yazılır, WHERE ile değil.",
-        cozum=(
-            "SELECT user_id, COUNT(*) AS completed_sayisi FROM orders "
-            "WHERE status = 'completed' GROUP BY user_id HAVING COUNT(*) >= 3;"
-        ),
-        tablo="orders",
-    ),
-    Soru(
-        id="g2-s05",
-        gun=2,
-        tur="sql",
-        kavram="COUNT(DISTINCT)",
-        soru=(
-            "`events` tablosunda her `event_name` için `event_name`, `olay_sayisi` (toplam olay satırı) ve "
-            "`benzersiz_kullanici` (farklı `user_id` sayısı) değerlerini getir."
-        ),
-        beklenen="3 sütun, her event_name için bir satır. benzersiz_kullanici her zaman olay_sayisi'ndan küçük veya eşit.",
-        ipucu="Farklı kullanıcı saymak için COUNT(DISTINCT user_id) kullan. Gruplama sütunu event_name.",
-        cozum=(
-            "SELECT event_name, COUNT(*) AS olay_sayisi, COUNT(DISTINCT user_id) AS benzersiz_kullanici "
-            "FROM events GROUP BY event_name;"
-        ),
-        tablo="events",
+        tur="python",
+        kavram="Doğruluk değeri (truthiness)",
+        soru="`[0, 1, '', 'a', None, [], [0]]` listesindeki her elemanın `bool(...)` değerini, sırayı koruyarak bir liste olarak `result`'a yaz.",
+        beklenen="result = [False, True, False, True, False, False, True]",
+        ipucu="Liste üretimi: [bool(x) for x in liste].",
+        cozum='result = [bool(x) for x in [0, 1, "", "a", None, [], [0]]]',
     ),
 ]

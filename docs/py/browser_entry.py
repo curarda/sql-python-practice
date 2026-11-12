@@ -89,7 +89,7 @@ def soru_listesi() -> str:
     return json.dumps(gunler, ensure_ascii=False)
 
 
-def calistir(tur: str, kod: str, tablo: str = "orders") -> str:
+def calistir(tur: str, kod: str, tablo: str = "siparisler") -> str:
     """Kodu karşılaştırmadan çalıştırır (Çalıştır düğmesi)."""
     sonuc = sandbox.calistir(tur, kod, tablo)
     return json.dumps(

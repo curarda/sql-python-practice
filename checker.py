@@ -12,7 +12,9 @@ Sonuç sözleşmesi:
 from __future__ import annotations
 
 import contextlib
+import copy
 import io
+import json
 import math
 import re
 import sqlite3
@@ -50,7 +52,7 @@ class Sonuc:
 
 _SQL_HATALARI = [
     (r"no such column: (\S+)", "Sütun bulunamadı: {0}. Sütun adını yazımına ve tablodaki adlara göre kontrol et."),
-    (r"no such table: (\S+)", "Tablo bulunamadı: {0}. Tablo adları: users, sessions, orders, events."),
+    (r"no such table: (\S+)", "Tablo bulunamadı: {0}. Tablo adları: siparisler, musteriler, vaka_siparisler, kirli ve diğerleri."),
     (r"ambiguous column name: (\S+)", "Sütun adı belirsiz: {0}. Tablo adıyla nitelendir (ör. o.user_id)."),
     (r"no such function: (\S+)", "Bilinmeyen fonksiyon: {0}. SQLite fonksiyon adlarını kontrol et."),
     (r"misuse of aggregate", "Toplulaştırma fonksiyonu (SUM, COUNT, AVG) yanlış kullanıldı. GROUP BY eksik olabilir."),
@@ -132,16 +134,21 @@ def _calisma_hatasini_cevir(hata: Exception) -> str:
 
 def run_python(
     kod: str,
-    tablo: str = "orders",
+    tablo: str = "siparisler",
     tablolar: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[Any, str, str | None]:
     """Python/pandas kodunu çalıştırır. (result, çıktı, hata) döner."""
     tablolar = tablolar if tablolar is not None else _tablolarin_kopyasi()
+    csv_yollari = data.csv_dosyalari()
     ad_alani = {
         "pd": pd,
         "np": np,
+        "json": json,
         "df": tablolar[tablo].copy(),
-        "ORDERS_CSV": str(data.csv_dosyalari()["orders"]),
+        "VAKA_SIPARISLER_CSV": str(csv_yollari["vaka_siparisler"]),
+        "VAKA_MUSTERILER_CSV": str(csv_yollari["vaka_musteriler"]),
+        "API_ORNEGI": copy.deepcopy(data.API_ORNEGI),
+        "KUR_JSON_METNI": data.KUR_JSON_METNI,
         **{ad: df.copy() for ad, df in tablolar.items()},
     }
     cikti, hata = _python_calistir(kod, ad_alani)

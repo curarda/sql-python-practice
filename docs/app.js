@@ -296,19 +296,19 @@ function anaSayfa() {
     const cozulen = cozulenSayisi(veri, ids);
     const yuzde = ids.length ? Math.round((100 * cozulen) / ids.length) : 0;
     return `<a class="kart gun-kart" href="#/gun/${gun.numara}">
-      <div class="satir"><span class="ad">Gün ${gun.numara} · ${esc(gunEtiketi(gun))}</span>
+      <div class="satir"><span class="ad">Bölüm ${gun.numara} · ${esc(gunEtiketi(gun))}</span>
       <span class="sayi">${cozulen}/${ids.length}</span></div>
       <div class="cubuk"><span class="${yuzde === 100 ? "tam" : ""}" style="width:${yuzde}%"></span></div>
     </a>`;
   });
-  return `<h2>Dersler</h2><p class="kucuk">Her gün kısa bir anlatım ve sorularla başlar. İlerlemen bu cihazda saklanır.</p>${kartlar.join("")}`;
+  return `<h2>Dersler</h2><p class="kucuk">Her bölüm kısa bir anlatım ve sorularla başlar. İlerlemen bu cihazda saklanır.</p>${kartlar.join("")}`;
 }
 
 function gunSayfasi(gun, secilenIndeks) {
   const veri = ilerlemeYukle();
   const ders = gun.ders;
   const metrikler = ders.metrikler
-    .map((m) => `<div class="kart metrik"><div class="baslik">PM metriği · ${esc(m.baslik)}</div><p>${esc(m.aciklama)}</p></div>`)
+    .map((m) => `<div class="kart metrik"><div class="baslik">📌 ${esc(m.baslik)}</div><p>${esc(m.aciklama)}</p></div>`)
     .join("");
   const secici = gun.sorular
     .map((s, i) => {
@@ -323,7 +323,7 @@ function gunSayfasi(gun, secilenIndeks) {
   const zayifKavramlar = gun.sorular.filter((s) => zayifMi(kayitOku(veri, s.id))).map((s) => s.kavram);
   return `
     <a class="geri-link" href="#/">${SOLA_YONLENDIR}</a>
-    <h2>Gün ${gun.numara}: ${esc(gun.baslik)}</h2>
+    <h2>Bölüm ${gun.numara}: ${esc(gun.baslik)}</h2>
     <details open>
       <summary>📘 Kısa anlatım</summary>
       <div class="anlatim">${markdown(ders.anlatim)}</div>
@@ -347,7 +347,7 @@ function tekrarSayfasi() {
   const veri = ilerlemeYukle();
   const zayif = zayifSorular(veri).filter((id) => tumSorular[id]).sort();
   if (!zayif.length) {
-    return { html: `<h2>Bugünkü tekrar</h2><div class="kart"><p>Zayıf olarak işaretli soru yok. Yeni günlere devam edebilirsin.</p></div>`, soru: null };
+    return { html: `<h2>Bugünkü tekrar</h2><div class="kart"><p>Zayıf olarak işaretli soru yok. Yeni bölümlere devam edebilirsin.</p></div>`, soru: null };
   }
   const set = tekrarlanabilirKarisik(zayif, bugunTarihi()).slice(0, TEKRAR_SAYISI);
   const secim = Math.min(oturum.tekrarSecim, set.length - 1);
@@ -382,7 +382,7 @@ function ilerlemeSayfasi() {
       <p>Zayıf soru: <strong>${zayifSorular(veri).length}</strong></p>
     </div>
     <div class="tablo-kap"><table>
-      <thead><tr><th>Gün</th><th>Konu</th><th>Çözülen</th><th>Tamam.</th><th>Doğruluk</th><th>Zayıf</th></tr></thead>
+      <thead><tr><th>Bölüm</th><th>Konu</th><th>Çözülen</th><th>Tamam.</th><th>Doğruluk</th><th>Zayıf</th></tr></thead>
       <tbody>${satirlar.join("")}</tbody>
     </table></div>
     <div class="kart" style="margin-top:14px">

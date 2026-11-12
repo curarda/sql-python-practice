@@ -4,10 +4,16 @@ Yeni soru eklemek için ilgili günün dosyasındaki SORULAR listesine bir Soru 
 Soru id'leri benzersiz olmalıdır; testler bunu kontrol eder.
 """
 
-from curriculum import gun1, gun2, gun3, gun4, gun5, gun6, gun7
+from curriculum import (
+    gun1, gun2, gun3, gun4, gun5, gun6, gun7, gun8, gun9, gun10,
+    gun11, gun12, gun13, gun14, gun15, gun16, gun17, gun18, gun19, gun20,
+)
 from curriculum.models import Ders, Gun, Metrik, Soru
 
-_GUN_MODULLERI = [gun1, gun2, gun3, gun4, gun5, gun6, gun7]
+_GUN_MODULLERI = [
+    gun1, gun2, gun3, gun4, gun5, gun6, gun7, gun8, gun9, gun10,
+    gun11, gun12, gun13, gun14, gun15, gun16, gun17, gun18, gun19, gun20,
+]
 
 GUNLER: list[Gun] = [
     Gun(numara=m.DERS.gun, baslik=m.DERS.baslik, ders=m.DERS, sorular=m.SORULAR)

@@ -27,7 +27,7 @@ def test_normal_python_sonucu_alt_surecten_doner():
 
 
 def test_normal_sql_sonucu_alt_surecten_doner():
-    sonuc = sandbox.calistir("sql", "SELECT COUNT(*) AS n FROM users", "users")
+    sonuc = sandbox.calistir("sql", "SELECT COUNT(*) AS n FROM siparisler", "siparisler")
     assert sonuc.hata is None
     assert int(sonuc.sonuc["n"].iloc[0]) > 0
 
@@ -61,7 +61,7 @@ def test_sys_exit_ana_sureci_etkilemez_ve_turkce_mesaj_verir():
 
 
 def test_sonsuz_dongu_degerlendirmede_kontrol_edilir_uygulama_cokmez():
-    soru = TUM_SORULAR["g4-s01"]
+    soru = TUM_SORULAR["b2-s01"]
     sonuc = checker.check(soru, "while True:\n    pass")
     assert not sonuc.dogru
     assert sonuc.kategori == "zaman_asimi"
@@ -72,11 +72,11 @@ def test_uygulama_sonsuz_dongu_yazan_cevapta_cokmez(tmp_path, monkeypatch):
     monkeypatch.setattr(progress, "DOSYA", dosya)
 
     at = AppTest.from_file(str(UYGULAMA), default_timeout=60).run()
-    gun4_etiketi = at.radio(key="bolum").options[3]
-    at.radio(key="bolum").set_value(gun4_etiketi).run()
-    at.radio(key="gun4_soru").set_value(0).run()
-    at.text_area(key="kod_g4-s01").input("while True:\n    pass").run()
-    at.button(key="gun4_kontrol").click().run()
+    gun2_etiketi = at.radio(key="bolum").options[1]
+    at.radio(key="bolum").set_value(gun2_etiketi).run()
+    at.radio(key="gun2_soru").set_value(0).run()
+    at.text_area(key="kod_b2-s01").input("while True:\n    pass").run()
+    at.button(key="gun2_kontrol").click().run()
 
     assert not at.exception
     assert any("5 saniyeden uzun sürdü" in e.value for e in at.error)

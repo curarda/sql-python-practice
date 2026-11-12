@@ -33,7 +33,7 @@ class SandboxSonucu:
     zaman_asimi: bool = False
 
 
-def calistir(tur: str, kod: str, tablo: str = "orders", zaman_siniri: float = ZAMAN_SINIRI_SN) -> SandboxSonucu:
+def calistir(tur: str, kod: str, tablo: str = "siparisler", zaman_siniri: float = ZAMAN_SINIRI_SN) -> SandboxSonucu:
     """Kullanıcı kodunu alt süreçte çalıştırır. Zaman aşımı, çökme ve normal sonucu ayırt eder."""
     with tempfile.TemporaryDirectory() as gecici:
         sonuc_dosyasi = Path(gecici) / "sonuc.pkl"
@@ -68,7 +68,7 @@ def calistir(tur: str, kod: str, tablo: str = "orders", zaman_siniri: float = ZA
         )
 
 
-def calistir_surec_ici(tur: str, kod: str, tablo: str = "orders", zaman_siniri: float = 0) -> SandboxSonucu:
+def calistir_surec_ici(tur: str, kod: str, tablo: str = "siparisler", zaman_siniri: float = 0) -> SandboxSonucu:
     """Alt süreç olmadan, aynı çalıştırma kodunu süreç içinde çalıştırır.
 
     Tarayıcı (Pyodide) ve hızlı testler için kullanılır. Zaman sınırı burada uygulanmaz;

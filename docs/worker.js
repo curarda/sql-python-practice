@@ -19,6 +19,8 @@ async function hazirla() {
     await py.loadPackage(["sqlite3"]);
     adim("pandas yükleniyor");
     await py.loadPackage(["pandas"]);
+    adim("scipy ve statsmodels yükleniyor (Bölüm 14, 20)");
+    await py.loadPackage(["scipy", "statsmodels"]);
     adim("Python dosyaları yazılıyor");
 
     const manifest = await (await fetch("py/manifest.json")).json();

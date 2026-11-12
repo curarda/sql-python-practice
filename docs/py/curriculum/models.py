@@ -29,7 +29,7 @@ class Soru:
     beklenen: str
     ipucu: str
     cozum: str
-    tablo: str = "orders"
+    tablo: str = "siparisler"
     sirali: bool = False
     ozet_gerekli: bool = False
     kirlilik: str = ""  # vakada bilinçli veri sorunu; "Veri notu" olarak gizli açılır

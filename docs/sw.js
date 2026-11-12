@@ -1,6 +1,6 @@
-/* Çevrimdışı kullanım için önbellek. 88b59cef5e5b build sırasında içerik hash'iyle değiştirilir;
+/* Çevrimdışı kullanım için önbellek. b300d8239b98 build sırasında içerik hash'iyle değiştirilir;
    içerik değişince yeni sürüm kurulur ve eski önbellek silinir. */
-const SURUM = "88b59cef5e5b";
+const SURUM = "b300d8239b98";
 const ONBELLEK = "sqlpy-" + SURUM;
 const CEKIRDEK = [
   "./", "index.html", "style.css", "app.js", "worker.js", "manifest.webmanifest",

@@ -46,7 +46,7 @@ def gun_etiketi(gun: Gun, ilerleme: dict) -> str:
         simge = "🟡"
     else:
         simge = "⬜"
-    return f"{simge} Gün {gun.numara} · {gun.baslik} ({cozulen}/{toplam})"
+    return f"{simge} Bölüm {gun.numara} · {gun.baslik} ({cozulen}/{toplam})"
 
 
 def soru_etiketi(sira: int, soru: Soru, ilerleme: dict) -> str:
@@ -185,12 +185,12 @@ def soru_goster(soru: Soru, ilerleme: dict, anahtar: str) -> None:
 
 def sayfa_gun(gun: Gun, ilerleme: dict) -> None:
     ders = gun.ders
-    st.header(f"Gün {gun.numara}: {gun.baslik}")
+    st.header(f"Bölüm {gun.numara}: {gun.baslik}")
     with st.expander("📘 Kısa anlatım", expanded=True):
         st.markdown(ders.anlatim)
         st.code(ders.ornek, language=ders.ornek_dili)
     for metrik in ders.metrikler:
-        st.info(f"**PM metriği · {metrik.baslik}**\n\n{metrik.aciklama}")
+        st.info(f"**📌 {metrik.baslik}**\n\n{metrik.aciklama}")
 
     st.subheader("Sorular")
     secenekler = list(range(len(gun.sorular)))
@@ -218,7 +218,7 @@ def sayfa_gun(gun: Gun, ilerleme: dict) -> None:
         if zayif_kavramlar:
             st.write("Hâlâ zayıf kavramlar (bir sonraki oturumda tekrar sorulacak): " + ", ".join(zayif_kavramlar))
         elif cozulen == toplam:
-            st.success("Tüm sorular çözüldü ve zayıf konu kalmadı. Bir sonraki güne geçebilirsin.")
+            st.success("Tüm sorular çözüldü ve zayıf konu kalmadı. Bir sonraki bölüme geçebilirsin.")
 
 
 def sayfa_tekrar(ilerleme: dict) -> None:
@@ -229,7 +229,7 @@ def sayfa_tekrar(ilerleme: dict) -> None:
     )
     zayif = [sid for sid in sorted(progress.zayif_sorular(ilerleme)) if sid in TUM_SORULAR]
     if not zayif:
-        st.success("Zayıf olarak işaretli soru yok. Yeni günlere devam edebilirsin.")
+        st.success("Zayıf olarak işaretli soru yok. Yeni bölümlere devam edebilirsin.")
         return
     rastgele = random.Random(date.today().isoformat())
     set_ids = rastgele.sample(zayif, min(TEKRAR_SAYISI, len(zayif)))
@@ -242,7 +242,7 @@ def sayfa_tekrar(ilerleme: dict) -> None:
         label_visibility="collapsed",
         key="tekrar_secim",
     )
-    st.caption(f"Gün {sorular[secim].gun} · {len(zayif)} zayıf sorudan {len(sorular)} tanesi gösteriliyor.")
+    st.caption(f"Bölüm {sorular[secim].gun} · {len(zayif)} zayıf sorudan {len(sorular)} tanesi gösteriliyor.")
     soru_goster(sorular[secim], ilerleme, anahtar="tekrar")
 
 
@@ -257,7 +257,7 @@ def sayfa_ilerleme(ilerleme: dict) -> None:
         dogruluk = progress.dogruluk_orani(ilerleme, ids)
         satirlar.append(
             {
-                "Gün": gun.numara,
+                "Bölüm": gun.numara,
                 "Konu": gun.baslik,
                 "Çözülen": cozulen,
                 "Toplam": toplam,
@@ -291,7 +291,7 @@ def main() -> None:
 
     with st.sidebar:
         st.title("🧮 SQL & Python")
-        st.caption("Product Management staj hazırlığı")
+        st.caption("Veri Analisti stajı hazırlığı · Python sıfırdan")
         etiketler = [gun_etiketi(g, ilerleme) for g in GUNLER] + [BOLUM_TEKRAR, BOLUM_ILERLEME]
         secim = st.radio("Bölüm", etiketler, label_visibility="collapsed", key="bolum")
 

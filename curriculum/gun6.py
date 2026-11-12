@@ -1,171 +1,76 @@
-"""6. Gün: pandas ile analiz."""
+"""Bölüm 6: NumPy temelleri — array ve vektörleştirme."""
 
 from curriculum.models import Ders, Metrik, Soru
 
 DERS = Ders(
     gun=6,
-    baslik="pandas: analiz",
+    baslik="NumPy temelleri",
     anlatim="""
-- `loc` etiketle, `iloc` konumla seçer: `df.loc[koşul, 'sütun']`, `df.iloc[0:5]`.
-- Boolean filtre: `df[(df['status'] == 'completed') & (df['amount'] > 500)]`. Koşulları `&` ve `|` ile birleştir, her birini parantez içine al.
-- `groupby('plan').agg(...)` gruplara göre toplulaştırır. `as_index=False` sonucu düz tablo yapar.
-- `merge(diger, on='user_id', how='left')` SQL'deki JOIN'in karşılığıdır (`inner`, `left`, `right`, `outer`).
-- `pd.concat([a, b])` tabloları alt alta, `pivot_table(index, columns, values, aggfunc)` satır-sütun özeti üretir.
-- `np.where(koşul, 'evet', 'hayır')` yeni bir kolonu koşula göre doldurur. Oranlar için `.round(2)` kullan.
+NumPy, sayı dizileriyle (array) hızlı çalışmanın kütüphanesidir; pandas'ın altyapısıdır.
+Bir `np.array` üzerindeki işlem tek tek elemanlara değil, dizinin tamamına birden uygulanır
+(**vektörleştirme**); bu, aynı işi Python döngüsüyle yapmaktan onlarca kat hızlıdır.
+
+```
+fiyatlar = np.array([750, 2400, 1100, 180, 1900])
+adetler  = np.array([2, 1, 1, 3, 1])
+ciro = fiyatlar * adetler        # eleman eleman çarpım, döngü yazmadan
+```
+
+İki boyutlu dizilerde `axis=0` sütun yönünde (aşağı), `axis=1` satır yönünde (yana) işlem
+yapar: `matris.sum(axis=1)` her satırın toplamını verir.
+
+**Eksik değer**: NumPy'de `np.nan` kullanılır; `np.mean([1, np.nan])` sonucu `nan` olur,
+`np.nanmean(...)` NaN'ları atlayarak hesaplar. `np.isnan(dizi)` her eleman için True/False
+döndürür.
+
+**Rastgele sayı**: `rng = np.random.default_rng(tohum)` tekrarlanabilir bir üretici verir;
+aynı tohumla her çalıştırmada aynı sayılar çıkar. Bu kitapçıktaki bütün örnek veriler böyle
+üretildi; `rng.uniform`, `rng.integers`, `rng.normal`, `rng.choice` en sık kullanılanlardır.
 """,
-    ornek="""ozet = orders.groupby('status', as_index=False).agg(
-    siparis_sayisi=('order_id', 'count'),
-    toplam_tutar=('amount', 'sum'),
-)
-ozet['oran'] = (ozet['siparis_sayisi'] / ozet['siparis_sayisi'].sum()).round(2)""",
+    ornek="""rng = np.random.default_rng(7)
+print(rng.integers(0, 10, 5))     # -> aynı tohumla her zaman aynı 5 sayı""",
     ornek_dili="python",
     metrikler=[
         Metrik(
-            baslik="A/B test temeli",
-            aciklama=(
-                "İki grup (kontrol ve deney) rastgele ayrılır, tek bir şey değiştirilir ve metrik karşılaştırılır. "
-                "Sonuç anlamlı mı kontrol etmek için örneklem büyüklüğü ve istatistiksel anlamlılık gerekir; "
-                "küçük farklar şans eseri de olabilir."
-            ),
+            baslik="Şaşırtıcı rakam",
+            aciklama="Bir milyon satırda vektörleştirilmiş bir toplama işlemi, aynı işi yapan bir for döngüsünden genellikle 50-100 kat hızlıdır.",
         ),
     ],
 )
 
 SORULAR = [
     Soru(
-        id="g6-s01",
+        id="b6-s01",
         gun=6,
         tur="python",
-        kavram="Boolean filtre ve loc",
-        soru=(
-            "`df` (orders) içinde `status` 'completed' ve `amount` 500'den büyük olan siparişlerin `order_id` değerlerini "
-            "küçükten büyüğe sıralanmış bir liste olarak `result` değişkenine yaz."
-        ),
-        beklenen="result bir liste: [order_id, ...] küçükten büyüğe. Değerler tam sayı.",
-        ipucu="Koşulu df.loc[(...) & (...), 'order_id'] ile seç, .tolist() ile listeye çevir, sorted() ile sırala.",
+        kavram="Vektörleştirilmiş çarpım",
+        soru="`fiyatlar = np.array([750, 2400, 1100, 180, 1900])` ve `adetler = np.array([2, 1, 1, 3, 1])` dizilerini eleman eleman çarpıp toplamını (toplam ciro) `result`'a float olarak yaz.",
+        beklenen="result = 7440.0",
+        ipucu="(fiyatlar * adetler).sum() döngü yazmadan toplam ciroyu verir.",
         cozum=(
-            "result = sorted(int(x) for x in df.loc[(df['status'] == 'completed') & (df['amount'] > 500), 'order_id'].tolist())"
+            "fiyatlar = np.array([750, 2400, 1100, 180, 1900])\n"
+            "adetler = np.array([2, 1, 1, 3, 1])\n"
+            "result = float((fiyatlar * adetler).sum())"
         ),
-        tablo="orders",
     ),
     Soru(
-        id="g6-s02",
+        id="b6-s02",
         gun=6,
         tur="python",
-        kavram="groupby ve agg",
-        soru=(
-            "`users` tablosundaki tekrarları kaldır. Her `plan` için kaç kullanıcı olduğunu bul. "
-            "Sonuç DataFrame'inde `plan` ve `kullanici_sayisi` sütunları olsun (`as_index=False` ile). "
-            "`plan` boş olanlar sonuçta yer almasın. Sonucu `result` değişkenine yaz."
-        ),
-        beklenen="2 sütun (`plan`, `kullanici_sayisi`), 3 satır (free, pro, enterprise).",
-        ipucu="drop_duplicates() sonra groupby('plan', as_index=False).agg(kullanici_sayisi=('user_id', 'count')).",
-        cozum=(
-            "u = users.drop_duplicates()\n"
-            "result = u.groupby('plan', as_index=False).agg(kullanici_sayisi=('user_id', 'count'))"
-        ),
-        tablo="users",
+        kavram="2 boyutlu dizi ve axis",
+        soru="`matris = np.array([[1, 2, 3], [4, 5, 6]])` için her satırın toplamını bir liste olarak `result`'a yaz.",
+        beklenen="result = [6, 15]",
+        ipucu="axis=1 satır yönünde (yana) toplar: matris.sum(axis=1).tolist().",
+        cozum="matris = np.array([[1, 2, 3], [4, 5, 6]])\nresult = matris.sum(axis=1).tolist()",
     ),
     Soru(
-        id="g6-s03",
+        id="b6-s03",
         gun=6,
         tur="python",
-        kavram="merge (left) ve groupby",
-        soru=(
-            "Tamamlanmış (completed) siparişleri, `users` tablosundaki tekrarları kaldırılmış kullanıcı planıyla "
-            "`user_id` üzerinden `how='left'` ile birleştir. Her plan için `toplam_tutar` (amount toplamı) hesapla. "
-            "Sonuç DataFrame'inde `plan` ve `toplam_tutar` sütunları olsun, `plan` boş olanlar çıksın."
-        ),
-        beklenen="2 sütun (`plan`, `toplam_tutar`). Her plan için bir satır.",
-        ipucu=(
-            "Önce u = users.drop_duplicates()[['user_id', 'plan']]. Sonra orders'tan completed olanları seç, "
-            "merge yap ve groupby('plan', as_index=False).agg(toplam_tutar=('amount', 'sum')) kullan."
-        ),
-        cozum=(
-            "u = users.drop_duplicates()[['user_id', 'plan']]\n"
-            "c = orders[orders['status'] == 'completed']\n"
-            "m = c.merge(u, on='user_id', how='left')\n"
-            "result = m.groupby('plan', as_index=False).agg(toplam_tutar=('amount', 'sum'))"
-        ),
-        tablo="orders",
-    ),
-    Soru(
-        id="g6-s04",
-        gun=6,
-        tur="python",
-        kavram="concat",
-        soru=(
-            "`orders` tablosundaki 'completed' satırlarla 'cancelled' satırları `pd.concat` ile alt alta birleştir. "
-            "Birleşik tablonun satır sayısını `result` değişkenine tam sayı olarak yaz."
-        ),
-        beklenen="result bir tam sayı: completed ve cancelled satırlarının toplamı.",
-        ipucu="İki filtreyi ayrı ayrı yaz, pd.concat([a, b]) ile birleştir ve len(...) ile say.",
-        cozum=(
-            "a = orders[orders['status'] == 'completed']\n"
-            "b = orders[orders['status'] == 'cancelled']\n"
-            "result = int(len(pd.concat([a, b])))"
-        ),
-        tablo="orders",
-    ),
-    Soru(
-        id="g6-s05",
-        gun=6,
-        tur="python",
-        kavram="pivot_table",
-        soru=(
-            "`orders` tablosuna `ay` sütunu ekle: `order_date` değerinin ilk 7 karakteri (ör. '2024-01'). "
-            "Sonra satırlarda `status`, sütunlarda `ay`, değerlerde `order_id` sayısı olacak şekilde "
-            "`pivot_table` oluştur. Boş hücreler 0 olsun. Sonucu `result` değişkenine yaz."
-        ),
-        beklenen="DataFrame: satırlar status (3 değer), sütunlar ay (2024-01, 2024-02, 2024-03), hücreler sipariş sayısı.",
-        ipucu=(
-            "df['ay'] = df['order_date'].str[:7]. pivot_table(index='status', columns='ay', values='order_id', "
-            "aggfunc='count', fill_value=0) kullan."
-        ),
-        cozum=(
-            "o = orders.copy()\n"
-            "o['ay'] = o['order_date'].str[:7]\n"
-            "result = o.pivot_table(index='status', columns='ay', values='order_id', aggfunc='count', fill_value=0)"
-        ),
-        tablo="orders",
-    ),
-    Soru(
-        id="g6-s06",
-        gun=6,
-        tur="python",
-        kavram="np.where ve yeni kolon",
-        soru=(
-            "`orders` tablosundan `order_id`, `amount` sütunlarını al. `buyuk_siparis` adında yeni bir sütun ekle: "
-            "amount 500'den büyükse 'evet', değilse (boş değer dahil) 'hayır'. Sonra `order_id`'ye göre artan sırala "
-            "ve ilk 5 satırı `result` değişkenine yaz."
-        ),
-        beklenen="DataFrame, 3 sütun (`order_id`, `amount`, `buyuk_siparis`), 5 satır, order_id artan.",
-        ipucu="np.where(koşul, 'evet', 'hayır') yeni kolonu verir. Boş amount için karşılaştırma False döner.",
-        cozum=(
-            "d = orders[['order_id', 'amount']].copy()\n"
-            "d['buyuk_siparis'] = np.where(d['amount'] > 500, 'evet', 'hayır')\n"
-            "result = d.sort_values('order_id').head(5)"
-        ),
-        tablo="orders",
-    ),
-    Soru(
-        id="g6-s07",
-        gun=6,
-        tur="python",
-        kavram="Oran hesabı ve round",
-        soru=(
-            "`orders` tablosunda her `status` için toplam satırlara oranını hesapla (0 ile 1 arasında, 2 ondalık). "
-            "Sonuç DataFrame'inde `status` ve `oran` sütunları olsun. Sonucu `result` değişkenine yaz."
-        ),
-        beklenen="2 sütun (`status`, `oran`), 3 satır. Oranların toplamı yaklaşık 1.",
-        ipucu=(
-            "groupby('status').size().reset_index(name='adet') ile say. Sonra adet / adet.sum() ile oran, .round(2) ile yuvarla."
-        ),
-        cozum=(
-            "s = orders.groupby('status').size().reset_index(name='adet')\n"
-            "s['oran'] = (s['adet'] / s['adet'].sum()).round(2)\n"
-            "result = s[['status', 'oran']]"
-        ),
-        tablo="orders",
+        kavram="NaN ile çalışmak",
+        soru="`veri = np.array([10, np.nan, 20, 30])` için NaN'ları atlayarak ortalamayı ve kaç tane NaN olduğunu `(ortalama, nan_sayisi)` biçiminde `result`'a yaz.",
+        beklenen="result = (20.0, 1)",
+        ipucu="np.nanmean NaN'ları atlar; np.isnan(veri).sum() NaN sayısını verir.",
+        cozum="veri = np.array([10, np.nan, 20, 30])\nresult = (float(np.nanmean(veri)), int(np.isnan(veri).sum()))",
     ),
 ]
