@@ -72,8 +72,8 @@ def test_uygulama_sonsuz_dongu_yazan_cevapta_cokmez(tmp_path, monkeypatch):
     monkeypatch.setattr(progress, "DOSYA", dosya)
 
     at = AppTest.from_file(str(UYGULAMA), default_timeout=60).run()
-    gun2_etiketi = at.radio(key="bolum").options[1]
-    at.radio(key="bolum").set_value(gun2_etiketi).run()
+    gun2_etiketi = at.radio(key="bolum_python").options[1]
+    at.radio(key="bolum_python").set_value(gun2_etiketi).run()
     at.radio(key="gun2_soru").set_value(0).run()
     at.text_area(key="kod_b2-s01").input("while True:\n    pass").run()
     at.button(key="gun2_kontrol").click().run()

@@ -71,3 +71,4 @@ class Gun:
     baslik: str
     ders: Ders
     sorular: list[Soru]
+    parkur: str = "python"  # "python" ya da "sql" — üst menüdeki iki ayrı parkurdan hangisine ait

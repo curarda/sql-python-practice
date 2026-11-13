@@ -1,16 +1,26 @@
 """Müfredat tutarlılığı: her referans çözüm kendi kontrolünden geçmeli, sorular yeterli ve benzersiz olmalı."""
 
 import checker
-from curriculum import GUNLER, TUM_SORULAR
+from curriculum import GUNLER, TUM_SORULAR, parkur_gunleri
 
 OZET = "Giyimde iade oranı yüksek. Kasım sonu ciroyu belirgin artırıyor. Stok ve kampanya buna göre planlanmalı."
 
 
-def test_yirmi_bolum_var_ve_her_bolumde_en_az_iki_soru():
-    assert len(GUNLER) == 20
-    assert [g.numara for g in GUNLER] == list(range(1, 21))
+def test_yirmi_iki_bolum_var_ve_her_bolumde_en_az_iki_soru():
+    assert len(GUNLER) == 22
     for gun in GUNLER:
         assert len(gun.sorular) >= 2, f"Bölüm {gun.numara} en az 2 soru içermeli"
+        assert gun.parkur in {"python", "sql"}, gun.numara
+
+
+def test_iki_parkur_ayriliyor():
+    python_gunleri = parkur_gunleri("python")
+    sql_gunleri = parkur_gunleri("sql")
+    assert len(python_gunleri) + len(sql_gunleri) == len(GUNLER)
+    assert all(g.parkur == "python" for g in python_gunleri)
+    assert all(g.parkur == "sql" for g in sql_gunleri)
+    # SQL parkuru kendi gösterim sırasına göre gelir (bölüm numarasına göre değil).
+    assert [g.numara for g in sql_gunleri] == [21, 22, 15]
 
 
 def test_toplam_soru_sayisi_makul():

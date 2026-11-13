@@ -23,10 +23,12 @@ async function hazirla() {
     await py.loadPackage(["scipy", "statsmodels"]);
     adim("Python dosyaları yazılıyor");
 
-    const manifest = await (await fetch("py/manifest.json")).json();
+    // cache: "no-store" şart: tarayıcının HTTP önbelleği, bir önceki derlemeden kalma
+    // .py dosyalarını sessizce servis edip yeni bölüm/soru eklemelerini gizleyebilir.
+    const manifest = await (await fetch("py/manifest.json", { cache: "no-store" })).json();
     py.FS.mkdirTree(`${UYGULAMA_KLASORU}/curriculum`);
     for (const yol of manifest) {
-      const metin = await (await fetch(`py/${yol}`)).text();
+      const metin = await (await fetch(`py/${yol}`, { cache: "no-store" })).text();
       py.FS.writeFile(`${UYGULAMA_KLASORU}/${yol}`, metin);
     }
     adim("browser_entry içe aktarılıyor");

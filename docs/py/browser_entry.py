@@ -62,6 +62,7 @@ def soru_listesi() -> str:
             {
                 "numara": gun.numara,
                 "baslik": gun.baslik,
+                "parkur": gun.parkur,
                 "ders": {
                     "anlatim": gun.ders.anlatim,
                     "metrikler": [{"baslik": m.baslik, "aciklama": m.aciklama} for m in gun.ders.metrikler],

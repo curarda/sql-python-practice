@@ -238,8 +238,6 @@ const oturum = {
    Görünümler
    --------------------------------------------------------------- */
 
-const SOLA_YONLENDIR = "← Dersler";
-
 function gunIdsi(gun) {
   return gun.sorular.map((s) => s.id);
 }
@@ -253,15 +251,31 @@ function rotaOku() {
   if (parcalar[0] === "gun" && parcalar[1]) {
     return { gorunum: "gun", gun: Number(parcalar[1]), soru: parcalar[2] !== undefined ? Number(parcalar[2]) : 0 };
   }
+  if (parcalar[0] === "parkur" && (parcalar[1] === "python" || parcalar[1] === "sql")) {
+    return { gorunum: "parkur", parkur: parcalar[1] };
+  }
   if (parcalar[0] === "tekrar") return { gorunum: "tekrar" };
   if (parcalar[0] === "ilerleme") return { gorunum: "ilerleme" };
   return { gorunum: "ana" };
 }
 
+// SQL parkurunun gösterim sırası, bölüm numarasından bağımsız olarak Python tarafıyla
+// aynı (curriculum/__init__.py'deki _SQL_SIRASI): yeni temel bölümler önce, kitapçığın
+// kendi SQL bölümü (15) en sonda.
+const SQL_SIRASI = { 21: 1, 22: 2, 15: 3 };
+
+function parkurGunleri(parkur) {
+  const liste = gunler.filter((g) => g.parkur === parkur);
+  if (parkur === "sql") {
+    liste.sort((a, b) => (SQL_SIRASI[a.numara] ?? a.numara) - (SQL_SIRASI[b.numara] ?? b.numara));
+  }
+  return liste;
+}
+
 function sekmeyiIsaretle(gorunum) {
+  const sekmeAdi = gorunum === "gun" || gorunum === "parkur" ? "ana" : gorunum;
   document.querySelectorAll(".sekmeler a").forEach((a) => {
-    const aktif = a.dataset.sekme === (gorunum === "gun" ? "ana" : gorunum);
-    a.classList.toggle("aktif", aktif);
+    a.classList.toggle("aktif", a.dataset.sekme === sekmeAdi);
   });
 }
 
@@ -278,6 +292,8 @@ function render() {
     icerik.innerHTML = gunSayfasi(gun, rota.soru);
     const secili = gun.sorular[rota.soru] || gun.sorular[0];
     soruyuYerlestir(document.getElementById("soru-alani"), secili);
+  } else if (rota.gorunum === "parkur") {
+    icerik.innerHTML = parkurSayfasi(rota.parkur);
   } else if (rota.gorunum === "tekrar") {
     const tekrar = tekrarSayfasi();
     icerik.innerHTML = tekrar.html;
@@ -289,9 +305,31 @@ function render() {
   }
 }
 
-function anaSayfa() {
+function parkurKarti(parkur, baslik, simge) {
   const veri = ilerlemeYukle();
-  const kartlar = gunler.map((gun) => {
+  const gunlerBuParkur = parkurGunleri(parkur);
+  const ids = gunlerBuParkur.flatMap(gunIdsi);
+  const cozulen = cozulenSayisi(veri, ids);
+  const yuzde = ids.length ? Math.round((100 * cozulen) / ids.length) : 0;
+  return `<a class="kart gun-kart" href="#/parkur/${parkur}">
+    <div class="satir"><span class="ad">${simge} ${esc(baslik)}</span>
+    <span class="sayi">${cozulen}/${ids.length}</span></div>
+    <p class="kucuk">${gunlerBuParkur.length} bölüm</p>
+    <div class="cubuk"><span class="${yuzde === 100 ? "tam" : ""}" style="width:${yuzde}%"></span></div>
+  </a>`;
+}
+
+function anaSayfa() {
+  return `<h2>Dersler</h2>
+    <p class="kucuk">İki ayrı parkur: istediğin zaman birinden diğerine geç, kaldığın yerden devam et. Her bölüm kısa bir anlatım ve sorularla başlar. İlerlemen bu cihazda saklanır.</p>
+    ${parkurKarti("python", "Python", "🐍")}
+    ${parkurKarti("sql", "SQL", "🗄️")}`;
+}
+
+function parkurSayfasi(parkur) {
+  const baslik = parkur === "python" ? "🐍 Python" : "🗄️ SQL";
+  const kartlar = parkurGunleri(parkur).map((gun) => {
+    const veri = ilerlemeYukle();
     const ids = gunIdsi(gun);
     const cozulen = cozulenSayisi(veri, ids);
     const yuzde = ids.length ? Math.round((100 * cozulen) / ids.length) : 0;
@@ -301,7 +339,10 @@ function anaSayfa() {
       <div class="cubuk"><span class="${yuzde === 100 ? "tam" : ""}" style="width:${yuzde}%"></span></div>
     </a>`;
   });
-  return `<h2>Dersler</h2><p class="kucuk">Her bölüm kısa bir anlatım ve sorularla başlar. İlerlemen bu cihazda saklanır.</p>${kartlar.join("")}`;
+  return `<a class="geri-link" href="#/">← Parkurlar</a>
+    <h2>${baslik}</h2>
+    <p class="kucuk">Bölümlerden istediğine gir, istediğin zaman buraya dönüp başka birine geç.</p>
+    ${kartlar.join("")}`;
 }
 
 function gunSayfasi(gun, secilenIndeks) {
@@ -321,8 +362,9 @@ function gunSayfasi(gun, secilenIndeks) {
   const cozulen = cozulenSayisi(veri, ids);
   const dogruluk = dogrulukOrani(veri, ids);
   const zayifKavramlar = gun.sorular.filter((s) => zayifMi(kayitOku(veri, s.id))).map((s) => s.kavram);
+  const parkurBasligi = gun.parkur === "python" ? "🐍 Python" : "🗄️ SQL";
   return `
-    <a class="geri-link" href="#/">${SOLA_YONLENDIR}</a>
+    <a class="geri-link" href="#/parkur/${gun.parkur}">← ${esc(parkurBasligi)}</a>
     <h2>Bölüm ${gun.numara}: ${esc(gun.baslik)}</h2>
     <p class="kucuk">${esc(ders.anlatim.trim())}</p>
     ${metrikler}
@@ -366,7 +408,8 @@ function ilerlemeSayfasi() {
     const cozulen = cozulenSayisi(veri, ids);
     const dogruluk = dogrulukOrani(veri, ids);
     const zayif = ids.filter((id) => zayifMi(kayitOku(veri, id))).length;
-    return `<tr><td>${gun.numara}</td><td>${esc(gun.baslik)}</td><td>${cozulen}/${ids.length}</td>
+    const parkurSimge = gun.parkur === "python" ? "🐍" : "🗄️";
+    return `<tr><td>${parkurSimge}</td><td>${gun.numara}</td><td>${esc(gun.baslik)}</td><td>${cozulen}/${ids.length}</td>
       <td>${Math.round((100 * cozulen) / ids.length)}%</td>
       <td>${dogruluk === null ? "—" : Math.round(100 * dogruluk) + "%"}</td><td>${zayif}</td></tr>`;
   });
@@ -379,7 +422,7 @@ function ilerlemeSayfasi() {
       <p>Zayıf soru: <strong>${zayifSorular(veri).length}</strong></p>
     </div>
     <div class="tablo-kap"><table>
-      <thead><tr><th>Bölüm</th><th>Konu</th><th>Çözülen</th><th>Tamam.</th><th>Doğruluk</th><th>Zayıf</th></tr></thead>
+      <thead><tr><th></th><th>Bölüm</th><th>Konu</th><th>Çözülen</th><th>Tamam.</th><th>Doğruluk</th><th>Zayıf</th></tr></thead>
       <tbody>${satirlar.join("")}</tbody>
     </table></div>
     <div class="kart" style="margin-top:14px">

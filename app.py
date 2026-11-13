@@ -11,8 +11,10 @@ import streamlit as st
 import checker
 import progress
 import sandbox
-from curriculum import GUNLER, TUM_SORULAR, Gun, Soru
+from curriculum import GUNLER, TUM_SORULAR, Gun, Soru, parkur_gunleri
 
+PARKUR_PYTHON = "🐍 Python"
+PARKUR_SQL = "🗄️ SQL"
 BOLUM_TEKRAR = "🔁 Bugünkü tekrar"
 BOLUM_ILERLEME = "📊 İlerleme"
 TEKRAR_SAYISI = 5
@@ -263,6 +265,7 @@ def sayfa_ilerleme(ilerleme: dict) -> None:
         dogruluk = progress.dogruluk_orani(ilerleme, ids)
         satirlar.append(
             {
+                "Parkur": "🐍 Python" if gun.parkur == "python" else "🗄️ SQL",
                 "Bölüm": gun.numara,
                 "Konu": gun.baslik,
                 "Çözülen": cozulen,
@@ -295,18 +298,29 @@ def main() -> None:
     st.set_page_config(page_title="SQL & Python Çalışma", page_icon="🧮", layout="wide")
     ilerleme = kayitli_ilerleme()
 
+    secili_gun = None
     with st.sidebar:
         st.title("🧮 SQL & Python")
         st.caption("Veri Analisti stajı hazırlığı · Python sıfırdan")
-        etiketler = [gun_etiketi(g, ilerleme) for g in GUNLER] + [BOLUM_TEKRAR, BOLUM_ILERLEME]
-        secim = st.radio("Bölüm", etiketler, label_visibility="collapsed", key="bolum")
+        ust_secenekler = [PARKUR_PYTHON, PARKUR_SQL, BOLUM_TEKRAR, BOLUM_ILERLEME]
+        ust_secim = st.radio("Parkur", ust_secenekler, label_visibility="collapsed", key="parkur")
 
-    if secim == BOLUM_TEKRAR:
+        if ust_secim in (PARKUR_PYTHON, PARKUR_SQL):
+            parkur = "python" if ust_secim == PARKUR_PYTHON else "sql"
+            st.divider()
+            gunler_bu_parkur = parkur_gunleri(parkur)
+            etiketler = [gun_etiketi(g, ilerleme) for g in gunler_bu_parkur]
+            bolum_secim = st.radio(
+                "Bölüm", etiketler, label_visibility="collapsed", key=f"bolum_{parkur}"
+            )
+            secili_gun = gunler_bu_parkur[etiketler.index(bolum_secim)]
+
+    if ust_secim == BOLUM_TEKRAR:
         sayfa_tekrar(ilerleme)
-    elif secim == BOLUM_ILERLEME:
+    elif ust_secim == BOLUM_ILERLEME:
         sayfa_ilerleme(ilerleme)
     else:
-        sayfa_gun(GUNLER[etiketler.index(secim)], ilerleme)
+        sayfa_gun(secili_gun, ilerleme)
 
 
 main()

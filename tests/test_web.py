@@ -21,7 +21,7 @@ def test_docs_py_kaynakla_ayni_olmali():
 
 def test_soru_listesi_tum_gunleri_ve_sorulari_verir():
     gunler = json.loads(browser_entry.soru_listesi())
-    assert [g["numara"] for g in gunler] == list(range(1, 21))
+    assert [g["numara"] for g in gunler] == list(range(1, 23))
     sorular = [s for g in gunler for s in g["sorular"]]
     assert len(sorular) == len(TUM_SORULAR)
     assert all(s["soru"] and s["beklenen"] and s["ipucu"] and s["anlatim"] for s in sorular)
