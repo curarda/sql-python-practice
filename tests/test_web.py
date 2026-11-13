@@ -24,7 +24,7 @@ def test_soru_listesi_tum_gunleri_ve_sorulari_verir():
     assert [g["numara"] for g in gunler] == list(range(1, 21))
     sorular = [s for g in gunler for s in g["sorular"]]
     assert len(sorular) == len(TUM_SORULAR)
-    assert all(s["soru"] and s["beklenen"] and s["ipucu"] for s in sorular)
+    assert all(s["soru"] and s["beklenen"] and s["ipucu"] and s["anlatim"] for s in sorular)
 
 
 def test_kontrol_dogru_cevabi_kabul_eder():

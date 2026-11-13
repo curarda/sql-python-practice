@@ -5,35 +5,17 @@ from curriculum.models import Ders, Metrik, Soru
 DERS = Ders(
     gun=19,
     baslik="Uçtan uca vaka: e-ticaret satış analizi",
-    anlatim="""
-Yöneticinin mesajı: *"Temmuz 2025 - Haziran 2026 sipariş verisini gönderiyorum. Yıllık
-performansı özetleyen bir sayfa hazırlar mısın? Hangi kategori ve kanal öne çıkıyor,
-mevsimsellik var mı, iadeler ne durumda?"* Görev belirsiz görünüyor ama dört soru içeriyor:
-(1) toplam performans (KPI), (2) kategori/kanal kırılımı, (3) zaman örüntüsü, (4) iadeler.
-Analize başlamadan önce bu soruları yaz; her tablo ve grafik bunlardan birine cevap vermeli.
-
-Veri (`vaka_siparisler`, ~6000 satır) gerçek hayattaki sorunları taşıyor: Türkçe biçimli
-CSV'den yeni okunmuş gibi `tarih` hâlâ metin (`gg.aa.yyyy`), bazı kategoriler büyük harfli
-ve fazladan boşluklu (`"ELEKTRONIK "`), bazı tutarlar boş ya da negatif, ve tekrar eden
-satırlar var. `musteriler` tablosu (800 satır) şehir ve kayıt tarihini taşır.
-
-Her alt soru, Bölüm 9'daki temizliği baştan uygular: tarihi çevir, kategoriyi
-`.str.strip().str.title()` ile düzelt, tekrarları at, tutarı boş/negatif olan satırları çıkar.
-`net_tutar`, iade edilen siparişte 0'dır (`np.where(s["iade"], 0, s["tutar"])`) — iade
-ciroya katılmaz. Son adımda (Adım 8), analizin ürünü kod değil, bir buçuk dakikada okunan
-bir özet metindir: her cümlede bir sayı, tek bir öneri, sınırlamalar dürüstçe belirtilmiş.
-""",
-    ornek="""basla = len(s)
-s["kategori"] = s["kategori"].str.strip().str.title()
-s = s.drop_duplicates()
-s = s[s["tutar"].notna() & (s["tutar"] > 0)]
-print(basla, "->", len(s))          # -> 6030 -> 5972
-s["net_tutar"] = np.where(s["iade"], 0, s["tutar"])   # iade edilen sipariş ciroya katılmaz""",
-    ornek_dili="python",
+    anlatim=(
+        "Yöneticinin mesajı: \"Yıllık performansı özetleyen bir sayfa hazırlar mısın? Hangi "
+        "kategori öne çıkıyor, mevsimsellik var mı, iadeler ne durumda?\" Bu bölümde "
+        "temizlikten KPI'lara, kategori kırılımından mevsimselliğe ve yöneticiye giden "
+        "özete kadar bütün adımları, gerçekçi şekilde kirletilmiş bir e-ticaret veri "
+        "setinde (`vaka_siparisler`, ~6000 satır; `musteriler`, 800 satır) uygulayacaksın."
+    ),
     metrikler=[
         Metrik(
-            baslik="Şaşırtıcı rakam",
-            aciklama="Yılın sadece 11 günü (Kasım sonu indirimi), yıllık net cironun %8,2'sini getiriyor.",
+            baslik="Yöntem notu",
+            aciklama="Her alt soru, temizliği (tarih çevir, kategori düzelt, tekrarları at, geçersiz tutarı çıkar) baştan uygular — gerçek işte de her analiz, aynı ham veriden tekrar başlar.",
         ),
     ],
 )
@@ -49,6 +31,23 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: temizlik sayımı",
+        anlatim="""
+Görev belirsiz görünüyor ama aslında dört soru içeriyor: (1) toplam performans (KPI'lar),
+(2) kategori kırılımı, (3) zaman içindeki örüntü, (4) iadeler. Analize başlamadan önce bu
+soruları yazmak, her tablo ve grafiğin bunlardan birine cevap vermesini sağlar.
+
+`vaka_siparisler` gerçek hayattaki sorunları taşıyor: Türkçe biçimli bir CSV'den yeni
+okunmuş gibi `tarih` hâlâ metin (`gg.aa.yyyy`), bazı kategoriler büyük harfli ve fazladan
+boşluklu (`"ELEKTRONIK "`), bazı tutarlar boş ya da negatif, ve tekrar eden satırlar var.
+Her temizlik adımından sonra satır sayısını yazdırmak ("6.030 satırla başladım, 58'i
+çıktı, 5.972 kaldı") hem bir kontrol hem de raporun ilk cümlesidir.
+""",
+        ornek="""toy = pd.DataFrame({"id": [1, 1, 2, 3], "tutar": [100, 100, -5, None]})
+basla = len(toy)
+toy = toy.drop_duplicates()
+toy = toy[toy["tutar"].notna() & (toy["tutar"] > 0)]
+print(basla, "->", len(toy))    # -> 4 -> 1   (1 tekrar, 1 negatif, 1 boş çıktı)""",
+        ornek_dili="python",
         soru=(
             "`vaka_siparisler` tablosunu temizle: `kategori`'yi `.str.strip().str.title()` ile düzelt, "
             "tekrar eden satırları at, `tutar`'ı boş (NaN) veya 0/negatif olan satırları çıkar. "
@@ -73,6 +72,20 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: ana göstergeler (KPI)",
+        anlatim="""
+KPI (key performance indicator, temel performans göstergesi), bir işin sağlığını
+özetleyen birkaç sayıdır: toplam ciro, sipariş sayısı, müşteri sayısı, ortalama/medyan
+sepet, iade oranı. İade edilen bir sipariş gerçek geliri temsil etmez; bu yüzden
+`net_tutar` sütunu iade edilenlerde 0'dır (`np.where(s["iade"], 0, s["tutar"])`) ve KPI'lar
+bu sütun üzerinden hesaplanır. Ortalama ile medyan arasındaki fark burada da önemlidir:
+ikisi birbirinden uzaksa, birkaç büyük sipariş ortalamayı yukarı çekiyordur; "tipik
+sipariş" için medyanı raporla.
+""",
+        ornek="""toy = pd.DataFrame({"musteri": ["A", "A", "B"], "tutar": [100, 300, 50], "iade": [False, True, False]})
+toy["net_tutar"] = np.where(toy["iade"], 0, toy["tutar"])
+print({"ciro": float(toy["net_tutar"].sum()), "musteri": int(toy["musteri"].nunique())})
+# -> {'ciro': 150.0, 'musteri': 2}   (300'lük iade ciroya katılmadı)""",
+        ornek_dili="python",
         soru=(
             "Temizlikten sonra (b19-s01'deki gibi) `net_tutar` sütununu ekle (iade edilen sipariş 0). "
             "`{'net_ciro':.., 'siparis':.., 'musteri':.., 'ort_sepet':.., 'medyan_sepet':.., "
@@ -80,7 +93,7 @@ SORULAR = [
             "iade oranı 0-1 arası 3 ondalığa yuvarlanmış olsun."
         ),
         beklenen="result = {'net_ciro': 5035451, 'siparis': 5972, 'musteri': 771, 'ort_sepet': 918, 'medyan_sepet': 647, 'iade_orani': 0.09}",
-        ipucu="Ortalama (918) medyandan (647) belirgin yüksek: birkaç pahalı elektronik siparişi ortalamayı çekiyor.",
+        ipucu="Ortalama medyandan belirgin yüksek çıkabilir: birkaç pahalı elektronik siparişi ortalamayı çekiyor.",
         cozum=(
             "s = vaka_siparisler.copy()\n"
             "s['kategori'] = s['kategori'].str.strip().str.title()\n"
@@ -104,6 +117,24 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: kategori özeti",
+        anlatim="""
+"Hangi kategori öne çıkıyor?" sorusunun cevabı bir `groupby("kategori").agg(...)`
+tablosudur: sipariş sayısı, brüt (iade dahil) ve net (iade hariç) ciro, iade oranı,
+ortalama sepet — hepsi aynı anda. `net`'e göre azalan sıralamak, en büyük katkıyı yapan
+kategoriyi en üste getirir. Bir kategorinin **sipariş sayısında** önde olması, **ciroda**
+da önde olacağı anlamına gelmez (Bölüm 10'daki Ankara/İstanbul örneği gibi); ikisini
+birlikte raporlamak gerekir.
+""",
+        ornek="""toy = pd.DataFrame({
+    "kategori": ["A", "A", "B"], "tutar": [100, 50, 400], "iade": [False, False, True],
+})
+toy["net_tutar"] = np.where(toy["iade"], 0, toy["tutar"])
+ozet = toy.groupby("kategori").agg(siparis=("tutar", "count"), net=("net_tutar", "sum")).sort_values("net", ascending=False)
+print(ozet)
+# kategori  siparis  net
+#        A        2  150
+#        B        1    0""",
+        ornek_dili="python",
         soru=(
             "Temizlikten sonra her kategori için `siparis` (sayı), `brut` (tutar toplamı), `net` "
             "(net_tutar toplamı), `iade_orani` (ortalama) ve `ort_sepet` (tutar ortalaması) sütunlarını "
@@ -132,6 +163,20 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: mevsimsellik (Kasım etkisi)",
+        anlatim="""
+"Mevsimsellik var mı?" sorusu, belirli bir tarih aralığının toplam içindeki payına
+bakılarak cevaplanır: `s[(s["tarih"] >= baslangic) & (s["tarih"] <= bitis)]` ile o
+aralığı filtrele, `net_tutar` toplamını genel toplama böl. Yılın küçük bir yüzdesini
+oluşturan birkaç günün (ör. büyük bir indirim dönemi), cironun şaşırtıcı derecede büyük
+bir kısmını getirmesi mümkündür — bu tür pencereler stok ve kampanya planlamasının en
+kritik noktasıdır. Bölüm 12'deki uyarı burada da geçerli: `tarih` metin olduğu sürece bu
+karşılaştırma çalışmaz, önce `pd.to_datetime(..., format=...)` ile çevirmen gerekir.
+""",
+        ornek="""gunler = pd.date_range("2026-01-01", "2026-01-10", freq="D")
+toy = pd.DataFrame({"tarih": gunler, "net_tutar": [10, 10, 10, 10, 10, 10, 10, 10, 100, 100]})
+pencere = toy[(toy["tarih"] >= "2026-01-09") & (toy["tarih"] <= "2026-01-10")]
+print(round(float(pencere["net_tutar"].sum() / toy["net_tutar"].sum()), 3))    # -> 0.714""",
+        ornek_dili="python",
         soru=(
             "Temizlikten sonra `net_tutar` ekle. 20-30 Kasım 2025 (dahil) arasındaki net cironun, "
             "yıllık net ciro içindeki payını (0-1 arası, 3 ondalık) `result`'a yaz."
@@ -156,6 +201,17 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: müşteri yoğunlaşması (Pareto)",
+        anlatim="""
+Bölüm 10'daki Pareto fikrinin aynısı burada da geçerli: müşterileri `net_tutar` toplamına
+göre azalan sırala, en büyük dilimin payına bak. `mc.head(int(len(mc) * 0.1))` müşterilerin
+en büyük %10'luk dilimini seçer; bu dilimin payı yüksekse (örn. cironun yarısından
+fazlasıysa), o müşteri grubunun kaybı işi doğrudan sarsar — sadakat programı ve kişisel
+iletişim için ilk aday listesi budur.
+""",
+        ornek="""toy = pd.Series([500, 300, 100, 50, 50], index=["M1", "M2", "M3", "M4", "M5"])  # zaten azalan
+en_buyuk_tek = toy.head(1)
+print(round(float(en_buyuk_tek.sum() / toy.sum()), 3))    # -> 0.5   (M1 tek başına yarısı)""",
+        ornek_dili="python",
         soru=(
             "Temizlikten sonra `net_tutar` ekle. Müşterileri net_tutar toplamına göre sırala; en "
             "büyük %10'luk dilimin toplam net ciro içindeki payını (0-1 arası, 3 ondalık) `result`'a yaz."
@@ -179,6 +235,21 @@ SORULAR = [
         gun=19,
         tur="python",
         kavram="Vaka: yöneticiye giden özet",
+        anlatim="""
+Analizin son ürünü kod değil, bir buçuk dakikada okunan bir metindir. İyi bir özetin dört
+özelliği vardır: **her cümlede bir sayı** (soyut değil somut), bölümün başında yazdığın
+dört soruyu (KPI, kategori, zaman, iade) **cevaplaması**, **tek bir öneri** (on tane değil)
+ve **sınırlamaların dürüstçe belirtilmesi** ("X satır temizlik sırasında çıkarıldı" gibi).
+Bu alıştırmada önceki beş noktada hesapladığın sayıları tek bir yerde topluyor ve bu
+disipline uyan bir özet yazıyorsun.
+""",
+        ornek="""# Önceki noktalardaki hesapları birleştirip tek sözlükte topla:
+ozet = {"net_ciro": 150.0, "musteri": 2, "en_riskli_kategori": "B"}
+print(ozet)
+# Sonra: "Toplam net ciro 150 TL, 2 müşteriden geldi. B kategorisinde iade oranı yüksek;
+#         ürün açıklamalarının gözden geçirilmesini öneririm. Küçük örneklem nedeniyle
+#         bu bulgu önümüzdeki ay teyit edilmeli."    <- 3 cümle, her birinde somut bir şey""",
+        ornek_dili="python",
         soru=(
             "Temizlikten sonra şu beş göstergeyi hesapla ve `{'net_ciro':.., 'iade_orani_giyim':.., "
             "'kasim_sonu_payi':.., 'top10_pay':.., 'musteri':..}` biçiminde `result`'a yaz: net ciro "

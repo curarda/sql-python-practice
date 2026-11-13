@@ -324,13 +324,10 @@ function gunSayfasi(gun, secilenIndeks) {
   return `
     <a class="geri-link" href="#/">${SOLA_YONLENDIR}</a>
     <h2>Bölüm ${gun.numara}: ${esc(gun.baslik)}</h2>
-    <details open>
-      <summary>📘 Kısa anlatım</summary>
-      <div class="anlatim">${markdown(ders.anlatim)}</div>
-      <pre><code>${esc(ders.ornek)}</code></pre>
-    </details>
+    <p class="kucuk">${esc(ders.anlatim.trim())}</p>
     ${metrikler}
-    <h4>Sorular</h4>
+    <h4>Noktalar</h4>
+    <p class="kucuk">Her nokta kendi kısa anlatımı ve örneğiyle gelir: önce öğren, sonra kodu yazıp dene.</p>
     <div class="soru-secici">${secici}</div>
     <div id="soru-alani"></div>
     <details>
@@ -404,6 +401,11 @@ function soruyuYerlestir(kapsayici, soru) {
   kapsayici.innerHTML = `
     <div class="kart">
       <h3>${esc(soru.kavram)}</h3>
+      <h4>📘 Öğren</h4>
+      <div class="anlatim">${markdown(soru.anlatim)}</div>
+      ${soru.ornek.trim() ? `<pre><code>${esc(soru.ornek)}</code></pre>` : ""}
+      <hr>
+      <h4>✏️ Şimdi sen dene</h4>
       <p>${esc(soru.soru)}</p>
       <p class="kucuk"><strong>Beklenen çıktı:</strong> ${esc(soru.beklenen)}</p>
       <div class="yardimci">

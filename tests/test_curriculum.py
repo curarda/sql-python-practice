@@ -28,6 +28,7 @@ def test_her_soru_alanlari_dolu_ve_turu_gecerli():
         assert soru.soru.strip() and soru.beklenen.strip() and soru.ipucu.strip(), soru.id
         assert soru.cozum.strip(), soru.id
         assert soru.kavram.strip(), soru.id
+        assert soru.anlatim.strip(), f"{soru.id}: noktanın kendi anlatımı boş"
 
 
 def test_her_bolumun_anlatimi_ve_dikkat_cekici_notu_var():

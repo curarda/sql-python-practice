@@ -98,6 +98,13 @@ def soru_goster(soru: Soru, ilerleme: dict, anahtar: str) -> None:
     `anahtar` widget anahtarlarının benzersiz olması için kullanılır (sayfa bazında).
     """
     st.markdown(f"#### {soru.kavram}")
+    st.markdown("##### 📘 Öğren")
+    st.markdown(soru.anlatim)
+    if soru.ornek.strip():
+        st.code(soru.ornek, language=soru.ornek_dili)
+
+    st.divider()
+    st.markdown("##### ✏️ Şimdi sen dene")
     st.markdown(soru.soru)
     st.caption(f"**Beklenen çıktı:** {soru.beklenen}")
     if soru.kirlilik:
@@ -186,16 +193,15 @@ def soru_goster(soru: Soru, ilerleme: dict, anahtar: str) -> None:
 def sayfa_gun(gun: Gun, ilerleme: dict) -> None:
     ders = gun.ders
     st.header(f"Bölüm {gun.numara}: {gun.baslik}")
-    with st.expander("📘 Kısa anlatım", expanded=True):
-        st.markdown(ders.anlatim)
-        st.code(ders.ornek, language=ders.ornek_dili)
+    st.caption(ders.anlatim.strip())
     for metrik in ders.metrikler:
         st.info(f"**📌 {metrik.baslik}**\n\n{metrik.aciklama}")
 
-    st.subheader("Sorular")
+    st.subheader("Noktalar")
+    st.caption("Her nokta kendi kısa anlatımı ve örneğiyle gelir: önce öğren, sonra kodu yazıp dene.")
     secenekler = list(range(len(gun.sorular)))
     secim = st.radio(
-        "Soru seç",
+        "Nokta seç",
         secenekler,
         format_func=lambda i: soru_etiketi(i + 1, gun.sorular[i], ilerleme),
         horizontal=True,

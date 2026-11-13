@@ -64,8 +64,6 @@ def soru_listesi() -> str:
                 "baslik": gun.baslik,
                 "ders": {
                     "anlatim": gun.ders.anlatim,
-                    "ornek": gun.ders.ornek,
-                    "ornek_dili": gun.ders.ornek_dili,
                     "metrikler": [{"baslik": m.baslik, "aciklama": m.aciklama} for m in gun.ders.metrikler],
                 },
                 "sorular": [
@@ -73,6 +71,9 @@ def soru_listesi() -> str:
                         "id": s.id,
                         "tur": s.tur,
                         "kavram": s.kavram,
+                        "anlatim": s.anlatim,
+                        "ornek": s.ornek,
+                        "ornek_dili": s.ornek_dili,
                         "soru": s.soru,
                         "beklenen": s.beklenen,
                         "ipucu": s.ipucu,
